@@ -1,0 +1,17 @@
+snowsql_config_path = "~/.snowsql/config"
+snowsql_connection_name = "dev"
+
+[default]
+input_parameters = "()"
+return_type = "STRING"
+file = "app.zip"
+name = "sponsor_appusage_corr_update_sp"
+handler = "app.main"
+execute_as_caller = true
+
+[dev]
+database = "TEAM2_DB"
+schema = "ANALYTICS"
+warehouse = "TEAM2_DW"
+role = "TEAM2_ROLE"
+overwrite = true

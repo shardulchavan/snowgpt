@@ -1,0 +1,17 @@
+snowsql_config_path = "~/.snowsql/config"
+snowsql_connection_name = "dev"
+
+[default]
+input_parameters = "(birthyear int)"
+return_type = "STRING"
+file = "app.zip"
+name = "get_generation_classification"
+handler = "app.classify_generation"
+execute_as_caller = true
+
+[dev]
+database = "TEAM2_DB"
+schema = "APP_USES"
+warehouse = "TEAM2_DW"
+role = "TEAM2_ROLE"
+overwrite = true
