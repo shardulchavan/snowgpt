@@ -1,91 +1,167 @@
-# Assignment4
+# SnowGPT — Natural Language to SQL on Snowflake
 
-## Assignment - Part 1
+Ask questions about your data warehouse in plain English. SnowGPT converts them into SQL queries using LangChain + OpenAI, executes them against Snowflake, and returns results in a clean Streamlit interface.
 
-| Name                            | Link                                                                             |           
-| ------------------------------- | ---------------------------------------------------------------------------------|
-| Shardul Chavan                  | https://github.com/shardulchavan/sfguide-data-engineering-with-snowpark-python   | 
-| Chinmay Gandi                   | https://github.com/chinmaygandi/sfguide-data-engineering-with-snowpark-python    | 
-| Dhawal Negi                     | https://github.com/dhawalnegi1/data-engineering-with-snowpark-python             |                                                  
+![Python](https://img.shields.io/badge/Python-3.9+-blue) ![Streamlit](https://img.shields.io/badge/Streamlit-1.x-red) ![Snowflake](https://img.shields.io/badge/Snowflake-Data%20Warehouse-29B5E8) ![LangChain](https://img.shields.io/badge/LangChain-0.1-green) ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--3.5-412991)
 
+---
 
-## Assignment - Part 2 
+## What it does
 
-### Project Descrition 
+- Accepts natural language questions from the user (e.g. *"Which NFL sponsors had the highest app engagement in Q3?"*)
+- Converts the question to a syntactically correct SQL query using LangChain's `create_sql_query_chain` with GPT
+- Executes the query against Snowflake and displays results as a dataframe
+- Provides an editable query field so users can tweak the generated SQL before running
+- Includes a built-in analytics dashboard with pre-built charts for quick data exploration
 
-In this application, the user will ask a question related to data stored in data warehouse in english language. The application will convert the english statement into SQL query and will get exectued against the snowflake databases. The results will be then displayed on the application.
+---
 
-The app also displays some useful analytics to give an idea of the data and insights
+## Architecture
 
-### Application and Documentation Link
+![Architecture](docs/architecture.png)
 
-App link - https://team2assignment4.streamlit.app/
+---
 
-### Project Resources
+## Tech Stack
 
-Project Demo - https://youtu.be/vD6DeUaKKtI
+| Layer | Technology |
+|---|---|
+| Frontend | Streamlit |
+| LLM Orchestration | LangChain + OpenAI GPT |
+| Data Warehouse | Snowflake |
+| UDFs / Stored Procs | Snowpark Python |
+| Deployment | Snowflake CLI (`snowcli`) |
 
-Project Codelabs - https://codelabs-preview.appspot.com/?file_id=1Ha-GJvJ_4nNn4plrQz33fCVaaJjFb73ZpVk_N4qm_xs#0
+---
 
-Proof of Concept - https://docs.google.com/document/d/1N0K34Oohp1onvOfS91-UuH7-uUOE0VP_1edQ5f1bfcY/edit
+## Project Structure
 
-### Tech Stack
-Python | Streamlit | Snowflake | Langchain | OPENAI
-
-### Architecture diagram ###
-
-![image](Snowflake_Streamlit_Architecture.png)
-
-![image](snowflake_internal_architecture.drawio.png)
-
-### Project Flow
-
-The user will ask a question related to the data in snowflake. The question which is in simple english language will be processed into an SQL query. Then the sql query is then sent to snowflake database for exection whose results are then shared into the application. 
-
-1) Firstly, we get our data from market place and load it into the snowflake datawarehouse. Below are the datasets that we are using for this project. The data is added to individual schemas :
-``` 
-  Consumer data : CONSUMER_INFO
-  App usage : APP_USES
-  NFL post sponsership : NFL_SPONSER
 ```
-  Now to load the data from the individual schemas we run 3 different scripts. The script contains steps to load data into various schemas that were mentioned above. 
+snowgpt/
+├── app/                        # Streamlit application
+│   ├── app.py                  # Main app — NL to SQL + UI
+│   ├── charts.py               # Analytics dashboard
+│   └── requirements.txt
+├── database/
+│   ├── setup.sql               # Snowflake initial setup
+│   ├── nfl_team_lookup.sql     # NFL team-state lookup table
+│   ├── orchestrate.sql         # Job orchestration
+│   ├── teardown.sql
+│   ├── load/                   # Data ingestion scripts
+│   │   ├── nfl_sponsor.sql
+│   │   ├── consumer_info.sql
+│   │   └── app_usage.sql
+│   ├── transforms/             # Data transformation into analytics schema
+│   │   ├── consumer_data.sql
+│   │   ├── app_usage.sql
+│   │   └── nfl_sponsor.sql
+│   └── udfs/                   # Snowpark Python UDFs + stored procedures
+│       ├── consumer_behaviour.py
+│       ├── app_user_classification.py
+│       └── sponsorship_correlation_sp.py
+├── utils/
+│   └── snowpark_utils.py
+├── docs/
+│   └── architecture.png
+├── deploy.py                   # Snowpark app deployment script
+├── environment.yml
+├── requirements.txt
+└── .gitignore
 ```
-  Consumer data : 03_load_consumer_info_data.sql 
-  App usage : 04_load_app_usage_data.sql
-  NFL post sponsership : 02_load_nfl_sponser_data.sql
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.9+
+- Snowflake account with a configured warehouse, database, and schema
+- OpenAI API key
+- `snowcli` installed for UDF/stored procedure deployment
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/shardulchavan/snowgpt-.git
+cd snowgpt-
 ```
-2) We then run the 05_create_nfl_team_state_lookup_table.sql to create lookup state table that contains value of the NFL teams and respective state it belongs to.
 
-3) We have our UDF functions written in 06_consumer_active_behaviour_udf and 07_app_user_generation_clasification_udf for consumer data and app usage data respectively.
+### 2. Set up environment variables
 
-   1) 06_consumer_active_behaviour_udf will identify what sports the individual is interested in and concat them in one column.
-   
-   2) 07_app_user_generation_clasification_udf will identify what generation the individual belongs to. eg GENZ or Millennial
-   
-4) Now we will run the below scripts to creating tables and streams into our main schema i.e. analytics schema. We will load the data into the analytics schema from the respective schemas mentioned in step 1 and then transform the data so that our tables and streams have fully refined data.
-   ```
-   Consumer data : 08_transform_consumer_data.sql
-   App usage : 09_transform_app_uses_info.sql
-   NFL post sponsership : 10_transform_nfl_sponsor_data.sql
-   ```
+Create a `.env` file in the `app/` directory:
 
-5) We will now execute the stored procedure 11_sponser_appusage_corr_sp to get data from streams of NFL and APP USAGE and aggregate them to generate a useful table (TEAM2_DB.ANALYTICS.SPONSORSHIP_APPUSAGES_CORR) that can be used for further analysis. 
+```env
+OPENAI_API_KEY=your_openai_api_key
+user_login_name=your_snowflake_user
+password=your_snowflake_password
+account_identifier=your_account_identifier
+database_name=your_database
+schema_name=your_schema
+warehouse_name=your_warehouse
+role_name=your_role
+```
 
-Proof of Concept (https://docs.google.com/document/d/1N0K34Oohp1onvOfS91-UuH7-uUOE0VP_1edQ5f1bfcY/edit) available to explain the data transformation and data quality checks that are done. 
+### 3. Install dependencies
 
-### Repository Structure
+```bash
+pip install -r requirements.txt
+```
 
-![image](Snowflake_Streamlit_Tree.png)
+### 4. Set up Snowflake
 
-### Contributions
+Run the scripts in order:
 
-| Name                            | Contribution                                                                 |  
-| ------------------------------- | -----------------------------------------------------------------------------|
-| Shardul Chavan                  | Snowflake, Langchain and Streamlit integration                                          | 
-| Chinmay Gandi                   | Snowflake - SQL process, UDF Function                                        | 
-| Dhawal Negi                     | Snowflake - SQL process, UDF Function, Stored Procedure                      |                                                  
+```bash
+# 1. Initial setup
+database/setup.sql
 
-### Additional Notes
-WE ATTEST THAT WE HAVEN’T USED ANY OTHER STUDENTS’ WORK IN OUR ASSIGNMENT AND ABIDE BY THE POLICIES LISTED IN THE STUDENT HANDBOOK. 
+# 2. Load data
+database/load/nfl_sponsor.sql
+database/load/consumer_info.sql
+database/load/app_usage.sql
 
+# 3. Create lookup table
+database/nfl_team_lookup.sql
 
+# 4. Deploy UDFs
+python deploy.py database/udfs
+
+# 5. Run transforms
+database/transforms/consumer_data.sql
+database/transforms/app_usage.sql
+database/transforms/nfl_sponsor.sql
+
+# 6. Orchestrate
+database/orchestrate.sql
+```
+
+### 5. Run the app
+
+```bash
+cd app
+streamlit run app.py
+```
+
+---
+
+## Data
+
+The app runs against three datasets loaded into Snowflake:
+
+| Schema | Description |
+|---|---|
+| `CONSUMER_INFO` | Consumer demographic and interest data |
+| `APP_USES` | Mobile app usage by panelists |
+| `NFL_SPONSER` | NFL post-game sponsorship exposure data |
+
+Two Snowpark UDFs enrich the data:
+- **consumer_behaviour** — identifies sports interests per consumer and concatenates them
+- **app_user_classification** — classifies users by generation (e.g. Gen Z, Millennial)
+
+A stored procedure (`sponsorship_correlation_sp`) aggregates NFL and app usage streams into a unified `SPONSORSHIP_APPUSAGES_CORR` table used for analysis.
+
+---
+
+## License
+This project is licensed under the [MIT License](LICENSE).
