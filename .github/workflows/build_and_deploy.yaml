@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - snowflakes
+
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -46,4 +46,4 @@ jobs:
           echo "dbname = $SNOWSQL_DATABASE" >> config
 
       - name: Deploy Snowpark apps
-        run: python deploy_snowpark_apps.py $GITHUB_WORKSPACE
+        run: python deploy.py $GITHUB_WORKSPACE
